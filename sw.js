@@ -1,4 +1,4 @@
-const CACHE = 'food-tracker-v2';
+const CACHE = 'daily-shelf-v1';
 const ASSETS = ['/', '/index.html', '/style.css', '/app.js', '/db.js', '/manifest.json'];
 
 self.addEventListener('install', e => {

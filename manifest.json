@@ -1,6 +1,6 @@
 {
-  "name": "Food Tracker",
-  "short_name": "FoodTracker",
+  "name": "Daily Shelf",
+  "short_name": "DailyShelf",
   "description": "Track pantry items and log meals with nutrition info",
   "start_url": "/",
   "display": "standalone",

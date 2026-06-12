@@ -1,4 +1,4 @@
-# Food Tracker
+# Daily Shelf
 
 A personal, offline-first PWA for tracking pantry items and logging meals with full nutrition info.
 
@@ -42,12 +42,12 @@ Netlify auto-deploys on every `git push`.
 git init
 git add .
 git commit -m "initial commit"
-gh repo create food-tracker --public --push
+gh repo create daily-shelf --public --push
 ```
 
 Or create the repo on github.com first, then:
 
 ```bash
-git remote add origin https://github.com/YOUR_USERNAME/food-tracker.git
+git remote add origin https://github.com/YOUR_USERNAME/daily-shelf.git
 git push -u origin main
 ```
