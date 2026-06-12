@@ -343,7 +343,7 @@ async function lookupFoodBarcode(code) {
     document.getElementById('fFat').value = r(v('fat') || 0);
     document.getElementById('fFiber').value = r(v('fiber') || 0);
     document.getElementById('fBarcode').value = code;
-    lastScannedThumbUrl = p.image_small_url || '';
+    lastScannedThumbUrl = p.image_small_url || p.image_front_small_url || '';
   } catch (e) {
     document.getElementById('foodScanner').style.display = 'none';
     alert('Lookup failed: ' + e.message);
