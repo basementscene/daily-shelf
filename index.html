@@ -3,95 +3,146 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#f7f5f0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="manifest" href="/manifest.json">
 <title>Daily Shelf</title>
 <link rel="stylesheet" href="/style.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
 
 <div class="header">
   <h1>Daily Shelf</h1>
-  <button class="btn btn-sm" onclick="exportData()">Export</button>
+  <button class="header-btn" onclick="toggleMenu()">...</button>
 </div>
 
-<div class="tab-bar">
-  <button class="active" data-tab="pantry">Pantry</button>
-  <button data-tab="meals">Meals</button>
-  <button data-tab="add">Add</button>
+<div class="menu-dropdown" id="menuDropdown">
+  <button onclick="exportData()">Export Data</button>
 </div>
 
 <div class="main-wrap" id="mainWrap">
   <div class="refresh-indicator" id="refreshIndicator">Pull to refresh</div>
   <div class="main" id="main">
 
-    <div class="view active" id="view-pantry">
+    <div class="view active" id="view-dashboard"></div>
+
+    <div class="view" id="view-pantry">
       <div class="search-bar">
         <input type="text" id="pantrySearch" placeholder="Search pantry..." oninput="renderPantry()">
       </div>
-      <button class="btn btn-primary" onclick="openLogMeal()" style="width:100%;margin-bottom:12px">Log a Meal</button>
       <div id="pantryList"></div>
+    </div>
+
+    <div class="view" id="view-recipes">
+      <div id="recipesList"></div>
     </div>
 
     <div class="view" id="view-meals">
       <div id="mealsList"></div>
     </div>
 
-    <div class="view" id="view-add">
-      <div class="btn-group">
-        <button class="btn btn-primary" onclick="startScan()">Scan Barcode</button>
-        <button class="btn" onclick="showManualBarcode()">Type Barcode</button>
-        <button class="btn" onclick="showManualForm()">Manual</button>
-      </div>
+  </div>
+</div>
 
-      <div id="manualBarcode" style="display:none;margin-bottom:12px">
-        <label>Barcode Number</label>
-        <div style="display:flex;gap:6px">
-          <input type="text" id="manualBarcodeInput" placeholder="e.g. 5601234567890">
-          <button class="btn btn-primary" onclick="lookupManualBarcode()">Look Up</button>
-        </div>
-      </div>
+<button class="fab" id="fabPantry" onclick="openFoodModal()">+</button>
+<button class="fab" id="fabRecipes" onclick="openRecipeModal()">+</button>
+<button class="fab" id="fabMeals" onclick="openLogMeal()">+</button>
 
-      <div id="manualForm" style="display:none">
-        <h3 id="formTitle" style="font-size:16px;font-weight:600;margin-bottom:4px">Add Food</h3>
-        <label>Food Name</label>
-        <input type="text" id="fName" placeholder="e.g. Bagel">
-        <label>Brand</label>
-        <input type="text" id="fBrand" placeholder="e.g. Brand A">
-        <div class="form-row">
-          <div>
-            <label>Serving Size</label>
-            <input type="number" id="fServingQty" value="100" step="any">
-          </div>
-          <div>
-            <label>Unit</label>
-            <input type="text" id="fServingUnit" value="g" placeholder="g / ml">
-          </div>
-        </div>
-        <div class="form-row">
-          <div><label>Calories (kcal)</label><input type="number" id="fKcal" step="any"></div>
-          <div><label>Protein (g)</label><input type="number" id="fProtein" step="any"></div>
-        </div>
-        <div class="form-row">
-          <div><label>Carbs (g)</label><input type="number" id="fCarbs" step="any"></div>
-          <div><label>Fat (g)</label><input type="number" id="fFat" step="any"></div>
-        </div>
-        <div class="form-row">
-          <div><label>Fiber (g)</label><input type="number" id="fFiber" step="any"></div>
-          <div><label>Barcode</label><input type="text" id="fBarcode" placeholder="Optional"></div>
-        </div>
-        <button class="btn btn-primary" onclick="saveFoodItem()" style="width:100%;margin-top:14px">Save to Pantry</button>
-        <button class="btn" onclick="clearAddForm()" style="width:100%;margin-top:6px">Cancel</button>
-      </div>
+<nav class="bottom-nav">
+  <button data-tab="dashboard" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="13" width="4" height="7" rx="1"/><rect x="10" y="9" width="4" height="11" rx="1"/><rect x="16" y="5" width="4" height="15" rx="1"/></svg>
+  </button>
+  <button data-tab="pantry">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="M3 9V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4"/></svg>
+  </button>
+  <button data-tab="recipes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+  </button>
+  <button data-tab="meals">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2v18a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V2"/><path d="M10 10H6"/><path d="M18 2v20"/><path d="M16 10a4 4 0 0 0-4-4v4"/></svg>
+  </button>
+</nav>
 
-      <div id="scanner" style="display:none"></div>
-      <div id="scanControls" style="display:none">
-        <button class="btn btn-danger" onclick="stopScan()">Cancel Scan</button>
+<!-- Food Modal -->
+<div class="overlay" id="foodModal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 id="foodModalTitle">Add Food</h2>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm btn-danger" id="deleteFoodBtn" onclick="deleteFoodItem(editFoodId)" style="display:none">Delete</button>
       </div>
     </div>
+    <label>Food Name</label>
+    <input type="text" id="fName" placeholder="e.g. Bagel">
+    <label>Brand</label>
+    <input type="text" id="fBrand" placeholder="e.g. Brand A">
+    <div class="form-row">
+      <div>
+        <label>Serving Size</label>
+        <input type="number" id="fServingQty" value="100" step="any">
+      </div>
+      <div>
+        <label>Unit</label>
+        <input type="text" id="fServingUnit" value="g" placeholder="g / ml">
+      </div>
+    </div>
+    <div class="form-row">
+      <div><label>Calories (kcal)</label><input type="number" id="fKcal" step="any"></div>
+      <div><label>Protein (g)</label><input type="number" id="fProtein" step="any"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Carbs (g)</label><input type="number" id="fCarbs" step="any"></div>
+      <div><label>Fat (g)</label><input type="number" id="fFat" step="any"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Fiber (g)</label><input type="number" id="fFiber" step="any"></div>
+      <div><label>Barcode</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="fBarcode" placeholder="Optional">
+          <button class="btn btn-sm" onclick="showFoodBarcodeForm()">Scan</button>
+        </div>
+      </div>
+    </div>
+    <div id="foodScanner" style="display:none;margin-top:10px"></div>
+    <div id="foodScanControls" style="display:none;margin-top:6px">
+      <button class="btn btn-sm btn-danger" onclick="stopFoodScan()">Cancel Scan</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeFoodModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFoodItem()">Save</button>
+    </div>
+  </div>
+</div>
 
+<!-- Recipe Modal -->
+<div class="overlay" id="recipeModal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 id="recipeModalTitle">New Recipe</h2>
+      <button class="btn btn-sm btn-danger" id="deleteRecipeBtn" onclick="deleteRecipe(editRecipeId)" style="display:none">Delete</button>
+    </div>
+    <label>Recipe Name</label>
+    <input type="text" id="recipeName" placeholder="e.g. Oatmeal">
+    <div style="margin-top:12px">
+      <label>Ingredients</label>
+      <div id="recipeIngredients"></div>
+      <button class="btn" onclick="addRecipeIngredient()" style="width:100%;margin:8px 0">+ Add Ingredient</button>
+    </div>
+    <div class="totals">
+      <div class="grid">
+        <div><div class="stat">Calories</div><div class="val" id="rKcal">0</div></div>
+        <div><div class="stat">Protein</div><div class="val" id="rProtein">0g</div></div>
+        <div><div class="stat">Carbs</div><div class="val" id="rCarbs">0g</div></div>
+        <div><div class="stat">Fat</div><div class="val" id="rFat">0g</div></div>
+        <div><div class="stat">Fiber</div><div class="val" id="rFiber">0g</div></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeRecipeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRecipe()">Save</button>
+    </div>
   </div>
 </div>
 
@@ -99,7 +150,7 @@
 <div class="overlay" id="mealModal">
   <div class="modal">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h2 id="mealModalTitle" style="margin-bottom:0">Log a Meal</h2>
+      <h2 id="mealModalTitle">Log a Meal</h2>
       <button class="btn btn-sm btn-danger" id="deleteMealBtn" onclick="deleteMeal(editMealId)" style="display:none">Delete</button>
     </div>
     <div class="form-row">
@@ -116,6 +167,12 @@
           <option value="snack">Snack</option>
         </select>
       </div>
+    </div>
+    <div style="margin-bottom:10px">
+      <label>From Recipe</label>
+      <select id="mealRecipeSelect" onchange="loadRecipeIntoMeal(this.value)">
+        <option value="">None</option>
+      </select>
     </div>
     <div id="mealItems"></div>
     <button class="btn" onclick="addMealEntry()" style="width:100%;margin:8px 0">+ Add Item</button>
