@@ -8,13 +8,14 @@ let editMealId = null;
 let editFoodId = null;
 let editRecipeId = null;
 let currentRecipeIngredients = [];
+let lastScannedThumbUrl = '';
 
 function r(v) { return Math.round(v * 10) / 10; }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c] || c); }
 
 const SEED = [
-  { name: 'Egg (raw)', brand: 'generic', servingQty: 50, servingUnit: 'g', kcal: 72, protein: 6.3, carbs: 0.4, fat: 4.8, fiber: 0, barcode: '' },
-  { name: 'Egg (boiled)', brand: 'generic', servingQty: 50, servingUnit: 'g', kcal: 78, protein: 6.3, carbs: 0.6, fat: 5.3, fiber: 0, barcode: '' },
+  { name: 'Egg (raw)', brand: 'generic', servingQty: 50, servingUnit: 'g', kcal: 72, protein: 6.3, carbs: 0.4, fat: 4.8, fiber: 0, barcode: '', thumbUrl: '' },
+  { name: 'Egg (boiled)', brand: 'generic', servingQty: 50, servingUnit: 'g', kcal: 78, protein: 6.3, carbs: 0.6, fat: 5.3, fiber: 0, barcode: '', thumbUrl: '' },
 ];
 
 function getFood(id) { return foodItems.find(f => f.id === id); }
@@ -170,6 +171,7 @@ function renderPantry() {
     if (!f) continue;
     html += `<div class="card">
       <div class="card-header">
+        ${f.thumbUrl ? `<div class="card-thumb"><img src="${esc(f.thumbUrl)}" alt="" loading="lazy"></div>` : ''}
         <div>
           <div class="card-title" onclick="openFoodModal(${f.id})">${esc(f.name)}</div>
           <div class="card-sub">${esc(f.brand)}</div>
@@ -226,6 +228,7 @@ function openFoodModal(id) {
     document.getElementById('fFat').value = f.fat;
     document.getElementById('fFiber').value = f.fiber;
     document.getElementById('fBarcode').value = f.barcode || '';
+    lastScannedThumbUrl = f.thumbUrl || '';
   } else {
     ['fName','fBrand','fKcal','fProtein','fCarbs','fFat','fFiber','fBarcode'].forEach(id => {
       const el = document.getElementById(id);
@@ -233,6 +236,7 @@ function openFoodModal(id) {
     });
     document.getElementById('fServingQty').value = '100';
     document.getElementById('fServingUnit').value = 'g';
+    lastScannedThumbUrl = '';
   }
   document.getElementById('foodModal').classList.add('open');
 }
@@ -256,6 +260,7 @@ async function saveFoodItem() {
     fat: parseFloat(document.getElementById('fFat').value) || 0,
     fiber: parseFloat(document.getElementById('fFiber').value) || 0,
     barcode: document.getElementById('fBarcode').value.trim() || '',
+    thumbUrl: lastScannedThumbUrl || '',
   };
   if (editFoodId) {
     await DB.updateFoodItem(editFoodId, item);
@@ -338,6 +343,7 @@ async function lookupFoodBarcode(code) {
     document.getElementById('fFat').value = r(v('fat') || 0);
     document.getElementById('fFiber').value = r(v('fiber') || 0);
     document.getElementById('fBarcode').value = code;
+    lastScannedThumbUrl = p.image_small_url || '';
   } catch (e) {
     document.getElementById('foodScanner').style.display = 'none';
     alert('Lookup failed: ' + e.message);
