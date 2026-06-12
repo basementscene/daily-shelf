@@ -12,6 +12,15 @@ let lastScannedThumbUrl = '';
 
 function r(v) { return Math.round(v * 10) / 10; }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c] || c); }
+function parseServingUnit(s) {
+  const map = { gram:'g', grams:'g', g:'g', ml:'ml', milliliter:'ml', milliliters:'ml', slice:'slice', slices:'slice', tablespoon:'tbsp', tablespoons:'tbsp', tbsp:'tbsp', teaspoon:'tsp', teaspoons:'tsp', tsp:'tsp', cup:'cup', cups:'cup', ounce:'oz', ounces:'oz', oz:'oz', piece:'piece', pieces:'piece', serving:'serving', servings:'serving' };
+  const valid = new Set(['g','ml','slice','tbsp','tsp','cup','oz','piece','serving']);
+  if (!s) return 'g';
+  let w = s.replace(/^[\d.,\s]+/, '').replace(/\(.*/, '').trim().split(/\s+/)[0];
+  if (!w) return 'g';
+  w = map[w.toLowerCase()];
+  return w && valid.has(w) ? w : 'g';
+}
 
 const SEED = [
   { name: 'Egg (raw)', brand: 'generic', servingQty: 50, servingUnit: 'g', kcal: 72, protein: 6.3, carbs: 0.4, fat: 4.8, fiber: 0, barcode: '', thumbUrl: '' },
@@ -331,7 +340,7 @@ async function lookupFoodBarcode(code) {
     const p = data.product;
     const n = p.nutriments || {};
     const serving = parseFloat(p.serving_quantity) || 100;
-    const unit = p.serving_quantity ? (p.serving_size || 'g') : 'g';
+    const unit = p.serving_quantity ? parseServingUnit(p.serving_size) : 'g';
     const v = (k) => n[k + '_serving'] ?? (n[k + '_100g'] ? n[k + '_100g'] * serving / 100 : 0);
     document.getElementById('fName').value = p.product_name || '';
     document.getElementById('fBrand').value = p.brands || '';
