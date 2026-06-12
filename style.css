@@ -63,7 +63,8 @@ body {
 .main-wrap { position: relative; flex: 1; overflow: hidden }
 .main {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden auto;
+  overscroll-behavior: none;
   padding: 16px;
   background: #f7f5f0;
   -webkit-overflow-scrolling: touch;
@@ -191,8 +192,18 @@ input, select, textarea {
   font-family: 'DM Mono', monospace;
   outline: none;
   transition: 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
 }
 input:focus, select:focus { border-color: #2d2b28; box-shadow: 0 0 0 2px rgba(45, 43, 40, 0.06) }
+
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238e8982' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+select:focus { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%232d2b28' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") }
 label { display: block; font-size: 10px; font-weight: 500; color: #8e8982; margin-bottom: 3px; margin-top: 12px; letter-spacing: 0.5px; text-transform: uppercase }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
 
