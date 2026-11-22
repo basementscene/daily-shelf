@@ -12,6 +12,12 @@ let lastScannedThumbUrl = '';
 
 function r(v) { return Math.round(v * 10) / 10; }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c] || c); }
+function localDateStr(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 function parseServingUnit(s) {
   const map = { gram:'g', grams:'g', g:'g', ml:'ml', milliliter:'ml', milliliters:'ml', slice:'slice', slices:'slice', tablespoon:'tbsp', tablespoons:'tbsp', tbsp:'tbsp', teaspoon:'tsp', teaspoons:'tsp', tsp:'tsp', cup:'cup', cups:'cup', ounce:'oz', ounces:'oz', oz:'oz', piece:'piece', pieces:'piece', serving:'serving', servings:'serving' };
   const valid = new Set(['g','ml','slice','tbsp','tsp','cup','oz','piece','serving']);
@@ -30,14 +36,20 @@ const SEED = [
 function getFood(id) { return foodItems.find(f => f.id === id); }
 function getPantry(id) { return pantryItems.find(p => p.id === id); }
 
+const SEED_KEY = 'dailyShelfSeeded';
+
 async function seed() {
+  try {
+    if (localStorage.getItem(SEED_KEY)) return;
+  } catch (e) {}
   const items = await DB.getFoodItems();
   if (items.length === 0) {
     for (const item of SEED) {
       const id = await DB.addFoodItem(item);
-      await DB.addPantryItem({ foodId: id, quantity: 4, dateAdded: new Date().toISOString().slice(0, 10) });
+      await DB.addPantryItem({ foodId: id, quantity: 4, dateAdded: localDateStr() });
     }
   }
+  try { localStorage.setItem(SEED_KEY, '1'); } catch (e) {}
 }
 
 async function loadData() {
@@ -107,7 +119,7 @@ document.querySelectorAll('.bottom-nav button').forEach(btn => {
 })();
 
 function renderDashboard() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateStr();
   const todayMeals = mealLogs.filter(m => m.date === today);
   let kcal = 0, protein = 0, carbs = 0, fat = 0, fiber = 0;
   for (const m of todayMeals) {
@@ -126,7 +138,7 @@ function renderDashboard() {
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().slice(0, 10);
+    const dateStr = localDateStr(d);
     const dayMeals = mealLogs.filter(m => m.date === dateStr);
     let cals = 0;
     for (const m of dayMeals) {
@@ -171,7 +183,7 @@ function renderPantry() {
     return f && (!q || f.name.toLowerCase().includes(q) || f.brand.toLowerCase().includes(q));
   });
   if (filtered.length === 0) {
-    list.innerHTML = '<div class="empty-state"><p>Your pantry is empty. Tap + to add items.</p></div>';
+    list.innerHTML = '<div class="empty-state"><p>Your pantry is empty. Tap + to add a new food, or use Add Existing Food.</p></div>';
     return;
   }
   let html = '';
@@ -217,6 +229,64 @@ async function adjustPantry(id, delta) {
 async function deleteAndReloadPantry(id) {
   await DB.deletePantryItem(id);
   await reload();
+}
+
+async function consumeFromPantry(foodId, amount) {
+  let remaining = amount;
+  const entries = pantryItems.filter(p => p.foodId === foodId);
+  for (const p of entries) {
+    if (remaining <= 0) break;
+    const take = Math.min(p.quantity, remaining);
+    const newQ = r(p.quantity - take);
+    remaining = r(remaining - take);
+    if (newQ <= 0) {
+      await DB.deletePantryItem(p.id);
+      const idx = pantryItems.indexOf(p);
+      if (idx !== -1) pantryItems.splice(idx, 1);
+    } else {
+      await DB.updatePantryItem(p.id, { quantity: newQ });
+      p.quantity = newQ;
+    }
+  }
+}
+
+function openAddToPantryModal() {
+  renderAddToPantryList();
+  document.getElementById('addToPantryModal').classList.add('open');
+}
+
+function closeAddToPantryModal() {
+  document.getElementById('addToPantryModal').classList.remove('open');
+}
+
+function renderAddToPantryList() {
+  const container = document.getElementById('addToPantryList');
+  const inPantry = new Set(pantryItems.map(p => p.foodId));
+  const available = foodItems.filter(f => !inPantry.has(f.id));
+  if (available.length === 0) {
+    container.innerHTML = '<div class="empty-state"><p>All saved foods are already in your pantry.</p></div>';
+    return;
+  }
+  container.innerHTML = available.map(f => `<div class="card" style="margin-bottom:8px">
+    <div class="card-header">
+      <div>
+        <div class="card-title">${esc(f.name)}</div>
+        <div class="card-sub">${esc(f.brand)}</div>
+      </div>
+      <button class="btn btn-sm btn-primary" onclick="addExistingToPantry(${f.id})">Add</button>
+    </div>
+  </div>`).join('');
+}
+
+async function addExistingToPantry(foodId) {
+  const existing = pantryItems.find(p => p.foodId === foodId);
+  if (existing) {
+    await DB.updatePantryItem(existing.id, { quantity: r(existing.quantity + 1) });
+  } else {
+    await DB.addPantryItem({ foodId, quantity: 1, dateAdded: localDateStr() });
+  }
+  await reload();
+  renderAddToPantryList();
 }
 
 function openFoodModal(id) {
@@ -275,7 +345,7 @@ async function saveFoodItem() {
     await DB.updateFoodItem(editFoodId, item);
   } else {
     const id = await DB.addFoodItem(item);
-    await DB.addPantryItem({ foodId: id, quantity: 1, dateAdded: new Date().toISOString().slice(0, 10) });
+    await DB.addPantryItem({ foodId: id, quantity: 1, dateAdded: localDateStr() });
   }
   closeFoodModal();
   await reload();
@@ -555,7 +625,7 @@ function openLogMeal() {
   currentMealEntries = [];
   document.getElementById('mealModalTitle').textContent = 'Log a Meal';
   document.getElementById('deleteMealBtn').style.display = 'none';
-  document.getElementById('mealDate').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('mealDate').value = localDateStr();
   const recipeSelect = document.getElementById('mealRecipeSelect');
   recipeSelect.innerHTML = '<option value="">None</option>' +
     recipes.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
@@ -639,12 +709,7 @@ async function saveMeal() {
       carbs: food.carbs, fat: food.fat, fiber: food.fiber || 0,
     });
     if (editMealId === null) {
-      const pantry = pantryItems.find(p => p.foodId === food.id);
-      if (pantry) {
-        const newQ = r(pantry.quantity - e.quantity);
-        if (newQ <= 0) await DB.deletePantryItem(pantry.id);
-        else await DB.updatePantryItem(pantry.id, { quantity: newQ });
-      }
+      await consumeFromPantry(food.id, e.quantity);
     }
   }
   if (editMealId !== null) {
@@ -696,6 +761,29 @@ function toggleMenu() {
   document.getElementById('menuDropdown').classList.toggle('open');
 }
 
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'block';
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'none';
+});
+
+async function installApp() {
+  document.getElementById('menuDropdown').classList.remove('open');
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  try { await deferredInstallPrompt.userChoice; } catch (e) {}
+  deferredInstallPrompt = null;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'none';
+}
+
 async function exportData() {
   document.getElementById('menuDropdown').classList.remove('open');
   const data = { foodItems, pantryItems, mealLogs, recipes };
@@ -703,7 +791,7 @@ async function exportData() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `daily-shelf-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `daily-shelf-${localDateStr()}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -717,10 +805,9 @@ document.addEventListener('click', (e) => {
 (async function init() {
   await seed();
   await reload();
-  renderDashboard();
-  document.getElementById('mealDate').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('mealDate').value = localDateStr();
   document.querySelector('.bottom-nav button[data-tab="dashboard"]')?.click();
   if ('serviceWorker' in navigator) {
-    try { await navigator.serviceWorker.register('/sw.js'); } catch (e) {}
+    try { await navigator.serviceWorker.register('sw.js'); } catch (e) {}
   }
 })();

@@ -18,6 +18,9 @@ app.js         UI logic
 db.js          IndexedDB data layer
 manifest.json  PWA manifest
 sw.js          Service worker
+vendor/        Vendored barcode scanner library (offline)
+fonts/         Vendored DM Mono font files (offline)
+icons/         PWA and home-screen icons
 ```
 
 ## Run Locally
@@ -28,6 +31,17 @@ python3 -m http.server 8080
 
 Open `http://localhost:8080` in a browser.
 
+## Install as an App (PWA)
+
+Serve the site over HTTPS (Netlify, GitHub Pages, etc.), then:
+
+- **Android/Chrome**: open the site → menu → **Install app** (or **Add to Home screen**).
+- **Desktop/Chrome**: click the install icon in the address bar.
+- **iOS/Safari**: Share → **Add to Home Screen**.
+
+Once installed it runs full-screen and works offline. Data is stored locally in the
+browser's IndexedDB — no account or backend. Use **Export Data** in the menu for backups.
+
 ## Deploy to Netlify (free, HTTPS, auto-deploys from GitHub)
 
 1. Push this repo to GitHub
@@ -35,19 +49,3 @@ Open `http://localhost:8080` in a browser.
 3. Pick this repo → Deploy
 
 Netlify auto-deploys on every `git push`.
-
-## Push to GitHub for the First Time
-
-```bash
-git init
-git add .
-git commit -m "initial commit"
-gh repo create daily-shelf --public --push
-```
-
-Or create the repo on github.com first, then:
-
-```bash
-git remote add origin https://github.com/YOUR_USERNAME/daily-shelf.git
-git push -u origin main
-```

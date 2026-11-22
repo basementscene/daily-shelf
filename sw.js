@@ -1,5 +1,13 @@
-const CACHE = 'daily-shelf-v2';
-const ASSETS = ['/', '/index.html', '/style.css', '/app.js', '/db.js', '/manifest.json'];
+const CACHE = 'daily-shelf-v4';
+const ASSETS = [
+  './', './index.html', './style.css', './app.js', './db.js', './manifest.json',
+  './vendor/html5-qrcode.min.js',
+  './fonts/dm-mono-300.woff2', './fonts/dm-mono-300-ext.woff2',
+  './fonts/dm-mono-400.woff2', './fonts/dm-mono-400-ext.woff2',
+  './fonts/dm-mono-500.woff2', './fonts/dm-mono-500-ext.woff2',
+  './icons/icon-192.png', './icons/icon-512.png',
+  './icons/icon-maskable-512.png', './icons/apple-touch-icon.png',
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -16,6 +24,12 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).catch(() => r))
+    caches.match(e.request).then(cached => {
+      if (cached) return cached;
+      return fetch(e.request).catch(() => {
+        if (e.request.mode === 'navigate') return caches.match('./index.html');
+        return Response.error();
+      });
+    })
   );
 });

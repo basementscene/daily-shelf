@@ -5,11 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#f7f5f0">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Daily Shelf">
+<link rel="manifest" href="manifest.json">
 <title>Daily Shelf</title>
-<link rel="stylesheet" href="/style.css">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+<script src="vendor/html5-qrcode.min.js"></script>
 </head>
 <body>
 
@@ -20,6 +24,7 @@
 
 <div class="menu-dropdown" id="menuDropdown">
   <button onclick="exportData()">Export Data</button>
+  <button id="installBtn" onclick="installApp()" style="display:none">Install App</button>
 </div>
 
 <div class="main-wrap" id="mainWrap">
@@ -32,6 +37,7 @@
       <div class="search-bar">
         <input type="text" id="pantrySearch" placeholder="Search pantry..." oninput="renderPantry()">
       </div>
+      <button class="btn" onclick="openAddToPantryModal()" style="width:100%;margin-bottom:12px">+ Add Existing Food</button>
       <div id="pantryList"></div>
     </div>
 
@@ -64,6 +70,17 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2v18a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V2"/><path d="M10 10H6"/><path d="M18 2v20"/><path d="M16 10a4 4 0 0 0-4-4v4"/></svg>
   </button>
 </nav>
+
+<!-- Add Existing Food Modal -->
+<div class="overlay" id="addToPantryModal">
+  <div class="modal">
+    <h2>Add Existing Food</h2>
+    <div id="addToPantryList"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeAddToPantryModal()">Close</button>
+    </div>
+  </div>
+</div>
 
 <!-- Food Modal -->
 <div class="overlay" id="foodModal">
@@ -202,7 +219,7 @@
   </div>
 </div>
 
-<script src="/db.js"></script>
-<script src="/app.js"></script>
+<script src="db.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
